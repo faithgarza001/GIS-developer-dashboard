@@ -40,6 +40,11 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+#log files
+*.log
+logs/
+
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -54,6 +59,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.coverage/
 
 # Translations
 *.mo
@@ -64,6 +70,9 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+migrations/
+alembic/
+alembic.ini
 
 # Flask stuff:
 instance/
@@ -76,6 +85,9 @@ instance/
 *.sqlite3
 *.db
 *.log
+*.bak
+*.backup
+*.sql
 
 # Sphinx documentation
 docs/_build/
@@ -83,6 +95,9 @@ docs/_build/
 # PyBuilder
 .pybuilder/
 target/
+*.pyo
+*.pyd
+
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -128,8 +143,19 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# POSTGIS GDAL
+*.gdal
+*.vrt
+*.tif
+*.geojson
+
+
 # Environments
 .env
+.env.local
+.env.development
+.env.production
+.env.*
 .venv
 env/
 venv/
