@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GIS Developer Dashboard</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+    }
+    .sidebar {
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid #dee2e6;
+    }
+    .map-container {
+      height: 100vh;
+      position: relative;
+    }
+    .info-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1rem;
+      border-top: 1px solid #ccc;
+      width: 100%;
+      max-height: 30vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+    <form id="upload-form">
+  <label><b>Upload Geo Data</b></label><br/>
+  <input type="file" id="file-input" name="file" accept=".geojson,.zip" /><br/><br/>
+  <button type="submit">Upload</button>
+</form>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 sidebar p-3">
+        <h4>GIS Layers</h4>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="1" id="layer1" checked />
+          <label class="form-check-label" for="layer1">Layer 1</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="2" id="layer2" />
+          <label class="form-check-label" for="layer2">Layer 2</label>
+        </div>
+        <hr />
+        <h5>Upload Geo Data</h5>
+        <input type="file" class="form-control mb-3" />
+        <button class="btn btn-primary w-100">Upload</button>
+      </div>
+
+      <div class="col-md-9 map-container">
+        <div id="map"></div>
+        <div class="info-panel">
+          <h6>Feature Info</h6>
+          <div id="feature-info">Click a feature to see details</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+ <script>
+const map = L.map('map').setView([30.2672, -97.7431], 4);
+
+// Base map
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Upload handler
+document.getElementById("upload-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const fileInput = document.getElementById("file-input");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Please select a file before uploading.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  alert("⏳ Uploading... please wait.");
+
+  fetch("/files/upload", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Upload failed");
+    }
+    return res.json();
+  })
+  .then(data => {
+    alert("✅ Upload successful. Marker is being loaded...");
+    const geojsonUrl = `/files/geojson/${data.id}`;
+    fetch(geojsonUrl)
+      .then(res => res.json())
+      .then(geojson => {
+        const layer = L.geoJSON(geojson).addTo(map);
+        try {
+          map.fitBounds(layer.getBounds());
+        } catch {
+          // fallback if point geometry doesn't have bounds
+          const coords = geojson.features[0].geometry.coordinates;
+          map.setView([coords[1], coords[0]], 10);
+        }
+      });
+  })
+  .catch(err => {
+    alert("⚠️ Upload failed: " + err.message);
+    console.error(err);
+  });
+});
+</script>
+</body>
+</html>
